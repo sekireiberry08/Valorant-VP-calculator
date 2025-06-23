@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>VP Calculator by sekireiberry08</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 40px;
+      background: linear-gradient(to bottom right, #f9f9f9, #e8f0ff);
+      color: #333;
+    }
+    body {
+        background-image: url("download.jpg");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+        position: relative;
+    }
+
+        body::before {
+        content: "";
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255,255,255,0.5); /* lớp phủ trắng 50% */
+        z-index: -1;
+    }
+    h2 {
+      margin-bottom: 30px;
+      color: #222;
+    }
+
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: 600;
+    }
+
+    input[type="number"] {
+      width: 200px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+      margin-bottom: 15px;
+      transition: border-color 0.3s;
+    }
+
+    input[type="number"]:focus {
+      border-color: #5b9bff;
+      outline: none;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: 600;
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #3c78c9;
+    }
+
+    .result {
+      margin-top: 30px;
+      padding: 20px;
+      border-radius: 8px;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    .error {
+      color: red;
+      font-weight: bold;
+      margin-top: 15px;
+      animation: shake 0.3s;
+    }
+
+    ul {
+      margin-top: 10px;
+      padding-left: 20px;
+    }
+
+    li {
+      margin-bottom: 5px;
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-3px); }
+      100% { transform: translateX(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <h2>CÔNG CỤ TÍNH TIỀN NẠP VP VALORANT</h2>
+
+  <label for="vpCurrent">Số VP bạn đang có:</label>
+  <input type="number" id="vpCurrent" min="0" value="0" placeholder="" />
+
+  <label for="vpNeeded">Số VP bạn muốn sở hữu:</label>
+  <input type="number" id="vpNeeded" min="1" placeholder="" />
+
+  <button onclick="tinhTien()">Xong</button>
+
+  <div id="error" class="error"></div>
+  <div class="result" id="result"></div>
+
+  <script>
+    const packages = [
+      { vp: 52, cost: 10000 },
+      { vp: 110, cost: 20000 },
+      { vp: 275, cost: 50000 },
+      { vp: 610, cost: 100000 },
+      { vp: 1220, cost: 200000 },
+      { vp: 3040, cost: 500000 },
+      { vp: 6550, cost: 1000000 },
+      { vp: 13250, cost: 2000000 }
+    ];
+
+    function tinhTien() {
+      const currentVP = parseInt(document.getElementById("vpCurrent").value) || 0;
+      const neededVP = parseInt(document.getElementById("vpNeeded").value);
+      const resultDiv = document.getElementById("result");
+      const errorDiv = document.getElementById("error");
+
+      resultDiv.innerHTML = "";
+      errorDiv.innerHTML = "";
+
+      if (isNaN(neededVP) || neededVP <= 0) {
+        errorDiv.innerHTML = "⚠️ Vui lòng nhập số VP bạn muốn sở hữu!";
+        errorDiv.classList.add("error");
+        return;
+      }
+
+      let remainingVP = neededVP - currentVP;
+
+      if (remainingVP <= 0) {
+        resultDiv.innerHTML = "✅ Bạn đã đủ VP. Không cần nạp thêm!";
+        return;
+      }
+
+      let totalCost = 0;
+      let selected = [];
+
+      while (remainingVP > 0) {
+        let idx = -1;
+        for (let i = packages.length - 1; i >= 0; i--) {
+          if (packages[i].vp <= remainingVP) {
+            idx = i;
+            break;
+          }
+        }
+        if (idx === -1) idx = 0;
+
+        totalCost += packages[idx].cost;
+        remainingVP -= packages[idx].vp;
+        selected.push(packages[idx]);
+      }
+
+      const countMap = {};
+      for (let pkg of selected) {
+        const key = `${pkg.vp}_${pkg.cost}`;
+        countMap[key] = (countMap[key] || { vp: pkg.vp, cost: pkg.cost, count: 0 });
+        countMap[key].count++;
+      }
+
+      let detailsHTML = `<strong>🧮 Số VP cần nạp thêm:</strong> ${neededVP - currentVP} VP<br>
+                         <strong>💰 Tổng tiền phải nạp:</strong> ${totalCost.toLocaleString()} VND<br><br>
+                         <strong>📦 Các gói đã chọn:</strong><ul>`;
+
+      for (let key in countMap) {
+        const entry = countMap[key];
+        detailsHTML += `<li>${entry.count} gói ${entry.vp} VP – ${entry.cost.toLocaleString()} VND</li>`;
+      }
+
+      detailsHTML += "</ul>";
+      resultDiv.innerHTML = detailsHTML;
+
+      // Cuộn xuống kết quả
+      resultDiv.scrollIntoView({ behavior: "smooth" });
+    }
+
+    // ENTER để gọi tính toán
+    document.getElementById("vpCurrent").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        document.getElementById("vpNeeded").focus(); // focus tiếp theo
+      }
+    });
+
+    document.getElementById("vpNeeded").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        tinhTien();
+      }
+    });
+  </script>
+
+</body>
+</html>
